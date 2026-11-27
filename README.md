@@ -2,5 +2,5 @@
 
 회식·모임 영수증을 1/N로 나누고, 술 안 마신 사람을 빼고 정산하며, 룰렛·사다리타기·폭탄 돌리기 미니게임과 카톡 공유 링크를 담은 모바일 웹 프로토타입입니다.
 
-- 앱: https://jihye386.github.io/party-split/
+- 앱: https://jihye386.github.io/part-split/
 - 단일 HTML 파일(외부 라이브러리 없음), 모바일 우선 UI
