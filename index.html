@@ -1,0 +1,2160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F2F4F6">
+<title>모임 정산 &amp; 미니게임</title>
+<style>
+  :root{
+    --bg:#F2F4F6;
+    --card:#FFFFFF;
+    --ink:#191F28;
+    --sub:#8B95A1;
+    --line:#E5E8EB;
+    --primary:#3182F6;
+    --primary-deep:#1B64DA;
+    --primary-weak:#E8F3FF;
+    --coral:#FF5B45;
+    --field:#F2F4F6;
+    --radius:20px;
+    --shadow:0 1px 2px rgba(17,24,39,.05), 0 6px 18px rgba(17,24,39,.04);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:#E7EAEE;
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Malgun Gothic",system-ui,sans-serif;
+    font-size:15px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;cursor:pointer}
+  .hidden{display:none !important}
+
+  .phone{
+    max-width:440px;
+    margin:0 auto;
+    min-height:100vh;
+    background:var(--bg);
+    padding:0 0 118px;
+    position:relative;
+    overflow-x:hidden;
+  }
+
+  /* ---------- app bar ---------- */
+  .appbar{padding:20px 20px 6px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{
+    width:42px;height:42px;border-radius:14px;display:grid;place-items:center;font-size:21px;
+    background:linear-gradient(140deg,#5B8DEF,#3182F6 55%,#7A5CFA);
+    box-shadow:0 6px 14px rgba(49,130,246,.28);
+  }
+  .brand h1{margin:0;font-size:18px;font-weight:800;letter-spacing:-.3px}
+  .brand p{margin:2px 0 0;font-size:12.5px;color:var(--sub);font-weight:500}
+
+  /* ---------- step nav ---------- */
+  .steps{
+    position:sticky;top:0;z-index:20;
+    display:flex;gap:6px;
+    padding:12px 16px 10px;
+    background:linear-gradient(to bottom, var(--bg) 72%, rgba(242,244,246,0));
+  }
+  .step-pill{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+    border:0;border-radius:13px;padding:11px 6px;
+    background:#E7EAEE;color:#8B95A1;font-size:13px;font-weight:700;
+    transition:.18s;
+  }
+  .step-pill span{
+    width:18px;height:18px;border-radius:50%;display:grid;place-items:center;
+    background:#D5DAE1;color:#fff;font-size:11px;font-weight:800;
+  }
+  .step-pill.active{background:#fff;color:var(--primary);box-shadow:var(--shadow)}
+  .step-pill.active span{background:var(--primary)}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:var(--card);border-radius:var(--radius);
+    padding:18px;margin:0 16px 12px;box-shadow:var(--shadow);
+  }
+  .card h2{margin:0 0 12px;font-size:15px;font-weight:800;letter-spacing:-.2px}
+  .card-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:12px}
+  .card-head h2{margin:0}
+  .hint{font-size:11.5px;color:var(--sub);font-weight:600}
+  .sub{font-size:12.5px;color:var(--sub);font-weight:500;margin:0}
+
+  .field-label{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin:0 0 8px}
+
+  .input{
+    width:100%;border:1px solid transparent;background:var(--field);
+    border-radius:13px;padding:14px 16px;font-size:16px;font-weight:700;
+    color:var(--ink);font-family:inherit;outline:none;
+  }
+  .input::placeholder{color:#B0B8C1;font-weight:500}
+  .input:focus{background:#fff;border-color:var(--primary)}
+
+  /* ---------- bills ---------- */
+  .bill-row{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+  .bill-label{
+    width:30px;flex:0 0 30px;font-size:12.5px;font-weight:700;color:var(--sub);
+    transition:.15s;
+  }
+  .bill-row.active .bill-label{color:var(--primary)}
+  .money-input{position:relative;flex:1}
+  .money-input input{
+    width:100%;border:1px solid transparent;background:var(--field);border-radius:13px;
+    padding:13px 34px 13px 14px;font-size:17px;font-weight:800;text-align:right;
+    color:var(--ink);font-family:inherit;outline:none;letter-spacing:-.3px;
+  }
+  .money-input input::placeholder{color:#B7BFC7;font-weight:600}
+  .money-input input:focus{background:#fff;border-color:var(--primary)}
+  .money-input span{
+    position:absolute;right:14px;top:50%;transform:translateY(-50%);
+    color:var(--sub);font-size:12.5px;font-weight:600;pointer-events:none;
+  }
+  .bill-del{
+    flex:0 0 30px;width:30px;height:30px;border-radius:50%;border:0;
+    background:#EDF0F3;color:#8B95A1;font-size:12px;font-weight:700;line-height:1;
+  }
+  .ghost-btn{
+    width:100%;margin-top:2px;padding:11px;border-radius:12px;
+    border:1px dashed #C9D0D8;background:transparent;color:#6B7684;
+    font-size:13.5px;font-weight:700;
+  }
+  .ghost-btn:active{background:#F7F8FA}
+  .quick-row{display:flex;gap:7px;margin-top:10px}
+  .quick{
+    flex:1;padding:11px 4px;border:0;border-radius:11px;
+    background:var(--primary-weak);color:var(--primary-deep);
+    font-size:13px;font-weight:800;
+  }
+  .quick:active{transform:scale(.97)}
+
+  /* ---------- stepper ---------- */
+  .stepper{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--field);border-radius:16px;padding:6px;
+  }
+  .stepper button{
+    width:46px;height:46px;border:0;border-radius:13px;background:#fff;
+    color:var(--ink);font-size:21px;font-weight:700;line-height:1;
+    box-shadow:0 1px 3px rgba(17,24,39,.09);
+  }
+  .stepper button:active{transform:scale(.95)}
+  .stepper button:disabled{color:#C4CBD3;box-shadow:none}
+  .stepper-value{font-size:17px;font-weight:800;letter-spacing:-.2px}
+  .stepper-value small{font-size:13px;color:var(--sub);font-weight:700;margin-left:2px}
+  .stepper.small{padding:4px;border-radius:13px}
+  .stepper.small button{width:38px;height:38px;font-size:18px;border-radius:10px}
+
+  /* ---------- switch ---------- */
+  .switch-row{display:flex;align-items:center;justify-content:space-between;gap:14px}
+  .switch-row h2{margin:0 0 3px}
+  .switch{
+    flex:0 0 52px;width:52px;height:30px;border-radius:999px;border:0;
+    background:#D3D9DF;position:relative;transition:background .2s;
+  }
+  .switch::after{
+    content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;
+    border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.22);
+    transition:transform .2s;
+  }
+  .switch[aria-checked="true"]{background:var(--primary)}
+  .switch[aria-checked="true"]::after{transform:translateX(22px)}
+
+  .split-panel{
+    margin-top:16px;padding-top:16px;border-top:1px solid var(--line);
+    display:grid;gap:14px;
+  }
+  .field{display:block}
+  .field > .field-label{margin-bottom:8px}
+
+  /* ---------- result ---------- */
+  .result-card{
+    background:linear-gradient(145deg,#1E2B4B 0%,#2C4570 58%,#335A93 100%);
+    color:#fff;
+  }
+  .result-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .result-top span{font-size:12.5px;font-weight:600;color:rgba(255,255,255,.62)}
+  .result-top b{font-size:25px;font-weight:800;letter-spacing:-.6px}
+  .per-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+  .per-box{
+    background:rgba(255,255,255,.09);border-radius:15px;padding:13px 14px;
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .per-box.highlight{background:rgba(84,168,255,.22);border-color:rgba(120,190,255,.5)}
+  .per-box span{display:block;font-size:12px;font-weight:700;color:rgba(255,255,255,.68)}
+  .per-box b{display:block;font-size:19px;font-weight:800;letter-spacing:-.4px;margin-top:4px}
+  .per-box small{display:block;font-size:11px;color:rgba(255,255,255,.5);margin-top:3px;font-weight:600}
+  .result-note{
+    margin:13px 0 0;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.72);
+    display:flex;gap:6px;line-height:1.4;
+  }
+  .result-warn{
+    margin:10px 0 0;padding:10px 12px;border-radius:12px;
+    background:rgba(255,196,84,.16);color:#FFD9A0;font-size:12px;font-weight:600;line-height:1.4;
+  }
+  .result-odd{
+    margin:10px 0 0;padding:11px 13px;border-radius:13px;display:grid;gap:3px;
+    background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);
+  }
+  .result-odd b{font-size:12.5px;font-weight:800;color:#FFE0A6}
+  .result-odd span{font-size:12px;font-weight:600;color:rgba(255,255,255,.8);line-height:1.45}
+  .blank-state{padding:16px 0 4px;font-size:13px;color:rgba(255,255,255,.62);font-weight:600;line-height:1.5}
+
+  /* ---------- account ---------- */
+  .account-row{display:grid;grid-template-columns:112px 1fr;gap:8px;margin-bottom:12px}
+  .account-row select,.account-row input{
+    width:100%;border:1px solid transparent;background:var(--field);border-radius:13px;
+    padding:13px 12px;font-size:15px;font-weight:700;color:var(--ink);
+    font-family:inherit;outline:none;appearance:none;
+  }
+  .account-row select:focus,.account-row input:focus{background:#fff;border-color:var(--primary)}
+  .account-row select{
+    background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='%238B95A1' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center;
+    padding-right:30px;
+  }
+
+  /* ---------- buttons ---------- */
+  .primary-btn{
+    width:100%;border:0;border-radius:16px;padding:16px;
+    background:var(--primary);color:#fff;font-size:16px;font-weight:800;letter-spacing:-.2px;
+    box-shadow:0 6px 16px rgba(49,130,246,.24);
+  }
+  .primary-btn:active{transform:scale(.99);background:#2B74E0}
+  .primary-btn:disabled{background:#B9CDEB;box-shadow:none;color:#fff}
+  .secondary-btn{
+    width:100%;border:0;border-radius:16px;padding:15px;
+    background:var(--primary-weak);color:var(--primary-deep);font-size:15px;font-weight:800;
+  }
+  .secondary-btn:active{background:#DBEBFF}
+
+  /* ---------- bottom bar ---------- */
+  .bottombar{
+    position:fixed;left:0;right:0;bottom:0;z-index:30;
+    max-width:440px;margin:0 auto;
+    padding:12px 16px calc(14px + env(safe-area-inset-bottom));
+    background:linear-gradient(to top, var(--bg) 70%, rgba(242,244,246,0));
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .bar-row{display:flex;gap:8px}
+  .bar-row .secondary-btn{flex:0 0 96px}
+  .bar-row .primary-btn{flex:1;font-size:15px;letter-spacing:-.5px;padding:16px 8px;white-space:nowrap}
+  .bottombar.wide .bar-row .secondary-btn{flex:1}
+  #app.pad-lg{padding-bottom:calc(154px + env(safe-area-inset-bottom))}
+  body.tall-bar .toast{bottom:calc(168px + env(safe-area-inset-bottom))}
+  .skip-btn{
+    width:100%;border:1px solid #E3E7EC;border-radius:14px;padding:12px;
+    background:#fff;color:#4E5968;font-size:13.5px;font-weight:800;
+    box-shadow:0 1px 2px rgba(17,24,39,.04);
+  }
+  .skip-btn:active{background:#F7F8FA}
+  .skip-btn::after{content:"›";margin-left:5px;color:#9AA4B0;font-weight:800}
+
+  /* ---------- game ---------- */
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{
+    border:1px solid #E1E5EA;background:#fff;color:#4E5968;
+    border-radius:999px;padding:9px 14px;font-size:13.5px;font-weight:700;
+    transition:.15s;
+  }
+  .chip.dashed{border-style:dashed;color:var(--sub)}
+  .chip.active{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 4px 10px rgba(49,130,246,.24)}
+  .chip:active{transform:scale(.97)}
+
+  .players{display:flex;flex-wrap:wrap;gap:7px}
+  .player-chip{
+    display:inline-flex;align-items:center;gap:7px;
+    background:var(--field);border-radius:999px;padding:7px 7px 7px 14px;
+    font-size:14px;font-weight:700;
+  }
+  .player-chip button{
+    width:21px;height:21px;border:0;border-radius:50%;background:#DCE1E7;color:#6B7684;
+    font-size:10px;font-weight:800;line-height:1;display:grid;place-items:center;padding:0;
+  }
+  .add-player{display:flex;gap:8px;margin-top:13px}
+  .add-player input{
+    flex:1;min-width:0;border:1px solid transparent;background:var(--field);border-radius:13px;
+    padding:13px 15px;font-size:16px;font-weight:700;color:var(--ink);
+    font-family:inherit;outline:none;
+  }
+  .add-player input:focus{background:#fff;border-color:var(--primary)}
+  .add-player button{
+    flex:0 0 66px;border:0;border-radius:13px;background:var(--primary-weak);
+    color:var(--primary-deep);font-size:14px;font-weight:800;
+  }
+
+  .tabs{display:flex;gap:4px;background:var(--field);border-radius:14px;padding:4px;margin-bottom:14px}
+  .tab{
+    flex:1;border:0;border-radius:11px;padding:11px;background:transparent;
+    color:var(--sub);font-size:14px;font-weight:800;transition:.15s;
+  }
+  .tab.active{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(17,24,39,.1)}
+
+  .canvas-wrap{margin:0 0 14px}
+  #rouletteCanvas{display:block;width:100%;aspect-ratio:1 / 1}
+  #ladderCanvas{display:block;width:100%;height:352px;background:#FBFCFD;border-radius:16px}
+  .two-btns{display:flex;gap:8px}
+  .two-btns .secondary-btn,.two-btns .primary-btn{flex:1;font-size:15px;padding:15px 8px}
+
+  .game-result{
+    margin-top:15px;border-radius:18px;padding:20px 16px;text-align:center;color:#fff;
+    background:linear-gradient(140deg,#FF8364 0%,#FF5B45 52%,#F63D68 100%);
+    box-shadow:0 8px 20px rgba(246,61,104,.24);
+    animation:pop .34s cubic-bezier(.2,1.3,.5,1);
+  }
+  @keyframes pop{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+  .gr-emoji{font-size:26px;display:block;line-height:1}
+  .gr-topic{margin:8px 0 2px;font-size:13px;font-weight:700;color:rgba(255,255,255,.82)}
+  .gr-name{display:block;font-size:27px;font-weight:900;letter-spacing:-.8px;margin:2px 0 2px}
+  .gr-sub{margin:0;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.8)}
+  .gr-odd{
+    margin-top:13px;padding:11px 13px;border-radius:13px;text-align:left;
+    background:rgba(0,0,0,.15);display:grid;gap:5px;
+  }
+  .gr-odd-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12.5px}
+  .gr-odd-row span{font-weight:700;color:rgba(255,255,255,.82)}
+  .gr-odd-row b{font-weight:900;letter-spacing:-.2px;margin-left:auto}
+
+  /* ---------- share step ---------- */
+  .share-summary{
+    border:1px solid var(--line);border-radius:16px;padding:16px;background:#FBFCFD;
+  }
+  .sp-title{font-size:16px;font-weight:800;letter-spacing:-.3px}
+  .sp-meta{font-size:12.5px;color:var(--sub);font-weight:600;margin-top:3px}
+  .sp-rows{display:grid;gap:6px;margin-top:13px;padding-top:13px;border-top:1px dashed #DDE2E8}
+  .sp-row{display:flex;justify-content:space-between;font-size:13.5px;font-weight:700}
+  .sp-row span{color:var(--sub);font-weight:600}
+  .sp-game{
+    margin-top:13px;padding:12px 14px;border-radius:13px;background:#FFF2EF;
+    font-size:13px;font-weight:700;color:#D9412B;
+  }
+  .sp-odd{margin-top:10px;padding-top:9px;border-top:1px dashed rgba(217,65,43,.25);display:grid;gap:4px}
+  .sp-odd .sp-row{font-size:12.5px;flex-wrap:wrap;gap:2px 8px}
+  .sp-odd .sp-row span{color:#B4634F}
+  .sp-odd .sp-row b{color:#C43A24;margin-left:auto;text-align:right}
+  .sp-odd-note{margin:0 0 1px;font-size:11.5px;font-weight:700;color:#B4634F;line-height:1.4}
+
+  /* ---------- friend view ---------- */
+  #shareView{padding-bottom:40px}
+  .share-head{padding:26px 22px 12px}
+  .badge{
+    display:inline-block;background:var(--primary-weak);color:var(--primary-deep);
+    font-size:11.5px;font-weight:800;border-radius:8px;padding:5px 9px;letter-spacing:.2px;
+  }
+  .share-head h1{margin:12px 0 4px;font-size:23px;font-weight:900;letter-spacing:-.6px;line-height:1.3}
+  .share-head p{margin:0;font-size:12.5px;color:var(--sub);font-weight:600}
+  .acct-btn{
+    width:100%;margin-top:14px;border:0;border-radius:14px;padding:14px;
+    background:#fff;color:var(--primary-deep);font-size:14.5px;font-weight:800;
+    box-shadow:var(--shadow);
+  }
+  .acct-box{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .acct-box div{min-width:0}
+  .acct-box span{display:block;font-size:12px;color:var(--sub);font-weight:600}
+  .acct-box b{display:block;font-size:16.5px;font-weight:800;letter-spacing:-.3px;margin-top:3px;word-break:break-all}
+  .acct-copy{
+    flex:0 0 auto;border:0;border-radius:12px;padding:11px 14px;
+    background:var(--primary-weak);color:var(--primary-deep);font-size:13px;font-weight:800;
+  }
+  .share-game{
+    margin:0 16px 12px;border-radius:20px;padding:20px;color:#fff;
+    background:linear-gradient(140deg,#FF8364 0%,#FF5B45 52%,#F63D68 100%);
+    box-shadow:0 8px 20px rgba(246,61,104,.22);
+  }
+  .sg-tag{font-size:11.5px;font-weight:800;color:rgba(255,255,255,.85);letter-spacing:.2px}
+  .sg-topic{margin:8px 0 10px;font-size:14px;font-weight:700;color:rgba(255,255,255,.9)}
+  .sg-winner{font-size:29px;font-weight:900;margin:0;letter-spacing:-.8px}
+  .sg-winner span{font-size:15px;font-weight:800;margin-left:4px;color:#FFE0DA}
+  .sg-players{margin:10px 0 0;font-size:12px;font-weight:600;color:rgba(255,255,255,.78);line-height:1.5}
+  .sg-odd{margin-top:12px;padding-top:11px;border-top:1px dashed rgba(255,255,255,.35);display:grid;gap:5px}
+  .sg-odd-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12.5px;font-weight:700}
+  .sg-odd-row span{color:rgba(255,255,255,.82);font-weight:700}
+  .sg-odd-row b{font-weight:900;margin-left:auto}
+
+  /* ---------- toast ---------- */
+  .toast{
+    position:fixed;left:50%;bottom:112px;z-index:100;
+    transform:translate(-50%,12px);opacity:0;pointer-events:none;
+    max-width:calc(100% - 48px);
+    background:rgba(25,31,40,.94);color:#fff;
+    padding:12px 18px;border-radius:14px;
+    font-size:13.5px;font-weight:700;text-align:center;
+    transition:opacity .2s, transform .2s;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  /* ---------- copy sheet (클립보드 실패 시) ---------- */
+  .sheet{position:fixed;inset:0;z-index:200;background:rgba(17,24,39,.42);display:flex;align-items:flex-end;justify-content:center}
+  .sheet-box{
+    width:100%;max-width:440px;background:#fff;border-radius:22px 22px 0 0;
+    padding:20px 18px calc(20px + env(safe-area-inset-bottom));
+    display:grid;gap:10px;max-height:84vh;
+  }
+  .sheet-box h3{margin:0;font-size:16px;font-weight:800}
+  .sheet-box textarea{
+    width:100%;min-height:190px;max-height:44vh;border:1px solid var(--line);border-radius:14px;
+    padding:14px;font-family:inherit;font-size:13.5px;line-height:1.55;color:var(--ink);
+    background:#FBFCFD;resize:none;outline:none;
+  }
+</style>
+</head>
+<body>
+
+<div id="app" class="phone">
+  <header class="appbar">
+    <div class="brand">
+      <div class="logo">🎉</div>
+      <div>
+        <h1>모임 정산 &amp; 미니게임</h1>
+        <p>회비 나누고, 커피 내기까지 한 번에</p>
+      </div>
+    </div>
+  </header>
+
+  <nav class="steps" id="steps" aria-label="진행 단계">
+    <button class="step-pill active" data-step="1" type="button"><span>1</span>정산</button>
+    <button class="step-pill" data-step="2" type="button"><span>2</span>미니게임</button>
+    <button class="step-pill" data-step="3" type="button"><span>3</span>공유</button>
+  </nav>
+
+  <main>
+    <!-- ================= STEP 1 ================= -->
+    <section class="step-panel" id="panel1">
+      <div class="card">
+        <label class="field-label" for="titleInput">모임 이름</label>
+        <input id="titleInput" class="input" type="text" maxlength="30" placeholder="예) 금요일 회식 1차" value="금요일 회식 1차">
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>금액</h2>
+          <span class="hint" id="activeHint">1차 칸에 더해져요</span>
+        </div>
+        <div id="billList"></div>
+        <button id="addBillBtn" class="ghost-btn" type="button">+ 2차 금액 추가</button>
+        <div class="quick-row">
+          <button class="quick" type="button" data-add="10000">+1만</button>
+          <button class="quick" type="button" data-add="50000">+5만</button>
+          <button class="quick" type="button" data-add="100000">+10만</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>전체 인원</h2>
+        <div class="stepper">
+          <button id="headMinus" type="button" aria-label="인원 줄이기">−</button>
+          <div class="stepper-value"><b id="headCount">4</b><small>명</small></div>
+          <button id="headPlus" type="button" aria-label="인원 늘리기">+</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="switch-row">
+          <div>
+            <h2>술 안 마신 사람 제외</h2>
+            <p class="sub">주류 금액은 술 마신 사람끼리만 나눠요</p>
+          </div>
+          <button id="splitToggle" class="switch" type="button" role="switch" aria-checked="false" aria-label="술 안 마신 사람 제외"></button>
+        </div>
+
+        <div id="splitPanel" class="split-panel hidden">
+          <div class="field">
+            <span class="field-label">주류 금액</span>
+            <div class="money-input">
+              <input id="alcoholInput" inputmode="numeric" placeholder="0" aria-label="주류 금액">
+              <span>원</span>
+            </div>
+          </div>
+          <div class="field">
+            <span class="field-label">술 안 마신 인원</span>
+            <div class="stepper small">
+              <button id="abstMinus" type="button" aria-label="비음주 인원 줄이기">−</button>
+              <div class="stepper-value"><b id="abstCount">0</b><small>명</small></div>
+              <button id="abstPlus" type="button" aria-label="비음주 인원 늘리기">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card result-card">
+        <div class="result-top">
+          <span>총 결제 금액</span>
+          <b id="totalAmount">0원</b>
+        </div>
+        <div id="resultBody"></div>
+        <p class="result-note" id="roundNote"></p>
+        <div id="warnBox"></div>
+        <div id="oddBox"></div>
+      </div>
+
+      <div class="card">
+        <h2>총무 계좌</h2>
+        <div class="account-row">
+          <select id="bankSelect" aria-label="은행 선택">
+            <option value="">은행 선택</option>
+            <option>KB국민은행</option>
+            <option>신한은행</option>
+            <option>우리은행</option>
+            <option>하나은행</option>
+            <option>NH농협은행</option>
+            <option>IBK기업은행</option>
+            <option>카카오뱅크</option>
+            <option>토스뱅크</option>
+            <option>케이뱅크</option>
+            <option>새마을금고</option>
+            <option>우체국</option>
+            <option>SC제일은행</option>
+          </select>
+          <input id="accountInput" type="text" inputmode="numeric" maxlength="24" placeholder="계좌번호" aria-label="계좌번호">
+        </div>
+        <button id="copyAccountBtn" class="secondary-btn" type="button">계좌 복사</button>
+      </div>
+    </section>
+
+    <!-- ================= STEP 2 ================= -->
+    <section class="step-panel hidden" id="panel2">
+      <div class="card">
+        <h2>내기 주제</h2>
+        <div class="chips" id="topicChips">
+          <button class="chip active" type="button" data-topic="☕ 커피 쏘기">☕ 커피 쏘기</button>
+          <button class="chip" type="button" data-topic="💸 끝전 몰아주기">💸 끝전 몰아주기</button>
+          <button class="chip" type="button" data-topic="🍻 2차 쏘기">🍻 2차 쏘기</button>
+          <button class="chip dashed" type="button" data-topic="__custom">✏️ 직접 입력</button>
+        </div>
+        <input id="customTopic" class="input hidden" type="text" maxlength="24" placeholder="내기 내용을 적어주세요" style="margin-top:10px">
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>참여자</h2>
+          <span class="hint" id="playerCount">4명</span>
+        </div>
+        <div class="players" id="playerList"></div>
+        <div class="add-player">
+          <input id="playerInput" type="text" maxlength="8" placeholder="이름" aria-label="참여자 이름">
+          <button id="addPlayerBtn" type="button">추가</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="tabs" role="tablist">
+          <button class="tab active" type="button" data-tab="roulette" role="tab">🎡 룰렛</button>
+          <button class="tab" type="button" data-tab="ladder" role="tab">🪜 사다리타기</button>
+        </div>
+
+        <div id="roulettePane">
+          <div class="canvas-wrap"><canvas id="rouletteCanvas" width="320" height="320"></canvas></div>
+          <button id="spinBtn" class="primary-btn" type="button">돌리기</button>
+        </div>
+
+        <div id="ladderPane" class="hidden">
+          <div class="canvas-wrap"><canvas id="ladderCanvas" width="320" height="352"></canvas></div>
+          <div class="two-btns">
+            <button id="shuffleBtn" class="secondary-btn" type="button">사다리 섞기</button>
+            <button id="revealBtn" class="primary-btn" type="button">결과 확인하기</button>
+          </div>
+        </div>
+
+        <div id="gameResult" class="game-result hidden"></div>
+      </div>
+    </section>
+
+    <!-- ================= STEP 3 ================= -->
+    <section class="step-panel hidden" id="panel3">
+      <div class="card">
+        <h2>공유할 결과</h2>
+        <div id="shareSummary"></div>
+      </div>
+      <div style="padding:0 16px">
+        <button id="copyKakaoBtn" class="primary-btn" type="button" style="margin-bottom:8px">카톡용 정산 내역 복사</button>
+        <button id="copyLinkBtn" class="secondary-btn" type="button" style="margin-bottom:8px">공유 링크 복사</button>
+        <button id="previewBtn" class="secondary-btn" type="button">친구 화면 미리보기</button>
+        <p class="sub" id="shareHint" style="margin:14px 2px 0;line-height:1.5">링크를 받은 친구는 앱 설치 없이 정산 결과와 게임 결과를 바로 볼 수 있어요.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="bottombar" id="bottombar">
+    <button id="skipGameBtn" class="skip-btn hidden" type="button">게임 없이 바로 결과 공유</button>
+    <div class="bar-row">
+      <button id="prevBtn" class="secondary-btn hidden" type="button">이전</button>
+      <button id="nextBtn" class="primary-btn" type="button">다음: 미니게임</button>
+    </div>
+  </div>
+</div>
+
+<div id="shareView" class="phone hidden"></div>
+<div id="copySheet" class="sheet hidden" role="dialog" aria-modal="true" aria-label="정산 내역">
+  <div class="sheet-box">
+    <h3>정산 내역</h3>
+    <p class="sub" style="margin:0">아래 내용을 길게 눌러 복사해 카톡에 붙여넣어 주세요.</p>
+    <textarea id="copySheetText" readonly></textarea>
+    <button id="copySheetClose" class="primary-btn" type="button">닫기</button>
+  </div>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+
+/* =======================================================================
+   PURE LOGIC START  (DOM 과 무관한 계산 · 인코딩 · 게임 수학)
+   ======================================================================= */
+var TAU = Math.PI * 2;
+var ROUND_UNIT = 10; // 원 단위 끝전 정리 기준
+
+function roundWon(v){ return Math.round(v / ROUND_UNIT) * ROUND_UNIT; }
+
+function fmt(n){
+  var v = Math.round(Number(n) || 0);
+  return v.toLocaleString('ko-KR');
+}
+
+/**
+ * 정산 계산
+ * @param {{total:number, head:number, split:boolean, alcohol:number, abstain:number}} input
+ */
+function calcSettlement(input){
+  var total = Math.max(0, Math.round(Number(input.total) || 0));
+  var head = Math.max(1, Math.min(99, Math.round(Number(input.head) || 1)));
+  var split = !!input.split;
+  var warnings = [];
+  var alcohol = 0;
+  var abstain = 0;
+
+  if (split) {
+    alcohol = Math.max(0, Math.round(Number(input.alcohol) || 0));
+    abstain = Math.max(0, Math.min(head, Math.round(Number(input.abstain) || 0)));
+  }
+  var drinkers = head - abstain;
+
+  if (alcohol > total) {
+    warnings.push('주류 금액이 총액보다 커요. 총액까지만 반영했어요.');
+    alcohol = total;
+  }
+  if (split && drinkers === 0 && alcohol > 0) {
+    warnings.push('술 마신 사람이 없어 주류 금액을 전체 금액에 포함했어요.');
+    alcohol = 0;
+  }
+  if (split && abstain === 0) {
+    warnings.push('모두 술을 마셨네요. 인원대로 똑같이 나눠요.');
+  }
+
+  var foodPool = total - alcohol;
+  var base = foodPool / head;
+  var drinkerRaw = drinkers > 0 ? base + alcohol / drinkers : base;
+  var perAbstain = roundWon(base);
+  var perDrinker = roundWon(drinkerRaw);
+  var perStandard = roundWon(total / head);
+  var collected = perAbstain * abstain + perDrinker * drinkers;
+  var diff = collected - total;
+
+  return {
+    total: total,
+    head: head,
+    split: split,
+    alcohol: alcohol,
+    abstain: abstain,
+    drinkers: drinkers,
+    foodPool: foodPool,
+    foodShare: base,
+    perAbstain: perAbstain,
+    perDrinker: perDrinker,
+    perStandard: perStandard,
+    perGap: perDrinker - perAbstain,
+    collected: collected,
+    diff: diff,
+    warnings: warnings
+  };
+}
+
+/* ---- 끝전 몰아주기 ----
+ * 1,000원 단위로 내림하고 남은 끝전을 당첨자 1명이 더 낸다.
+ * 1,000원 단위에서 끝전이 0원이면 100원 단위로 한 번 더 확인하고, 그래도 0원이면 전원 같은 금액.
+ */
+function isOddTopic(topic){
+  return String(topic == null ? '' : topic).indexOf('끝전') !== -1;
+}
+function floorUnit(v, unit){
+  var n = Math.max(0, Number(v) || 0);
+  return Math.floor(n / unit) * unit;
+}
+/**
+ * @param {{total:number,head:number,split:boolean,abstain:number,drinkers:number,foodShare:number,alcohol:number}} r calcSettlement 결과
+ * @param {string} winner 당첨자 이름
+ */
+function oddPlan(r, winner){
+  if (!r || !winner || !(r.total > 0)) return null;
+  var multi = !!(r.split && r.abstain > 0 && r.drinkers > 0);
+  var rawA = r.foodShare;                                                  // 비음주(또는 단일) 1인 기본액
+  var rawD = r.drinkers > 0 ? r.foodShare + r.alcohol / r.drinkers : r.foodShare; // 음주 1인 기본액
+  var units = [1000, 100];
+  var unit = 0, baseA = 0, baseD = 0, odd = 0, rest = 0;
+
+  for (var i = 0; i < units.length; i++) {
+    var u = units[i];
+    var a = floorUnit(rawA, u);
+    var d = floorUnit(rawD, u);
+    var base = multi ? a * r.abstain + d * r.drinkers : d * r.head;
+    if (r.total - base > 0) {
+      unit = u; baseA = a; baseD = d; odd = r.total - base; rest = base;
+      break;
+    }
+  }
+  if (!unit) {
+    unit = 100;
+    baseA = floorUnit(rawA, 100);
+    baseD = floorUnit(rawD, 100);
+    rest = multi ? baseA * r.abstain + baseD * r.drinkers : baseD * r.head;
+    odd = Math.max(0, r.total - rest);
+  }
+  if (!multi) baseA = baseD;
+
+  return {
+    winner: String(winner),
+    unit: unit,
+    odd: odd,
+    multi: multi,
+    baseA: baseA,
+    baseD: baseD,
+    winnerA: baseA + odd,
+    winnerD: baseD + odd,
+    head: r.head,
+    abstain: r.abstain,
+    drinkers: r.drinkers,
+    total: r.total,
+    collected: rest + odd,
+    diff: (rest + odd) - r.total
+  };
+}
+/** 게임이 '끝전' 주제이고 당첨자가 정해졌을 때만 끝전 계산을 적용 */
+function oddPlanFor(r, game){
+  if (!game || !game.winner || !isOddTopic(game.topic)) return null;
+  return oddPlan(r, game.winner);
+}
+
+/* ---- UTF-8 안전 Base64 (URL hash 용, base64url) ---- */
+function b64encode(str){
+  var bytes = new TextEncoder().encode(str);
+  var bin = '';
+  for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function b64decode(str){
+  var s = String(str).replace(/-/g, '+').replace(/_/g, '/');
+  while (s.length % 4) s += '=';
+  var bin = atob(s);
+  var bytes = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+
+/* ---- 룰렛 수학: 12시 방향 화살표가 가리키는 칸 ---- */
+function pointerIndex(rot, n){
+  if (n <= 0) return 0;
+  var a = ((-Math.PI / 2 - rot) % TAU + TAU) % TAU;
+  return Math.floor(a / (TAU / n)) % n;
+}
+function targetRotation(startRot, index, n, turns){
+  var t = (turns === undefined || turns === null) ? 5 : turns;
+  var slice = TAU / n;
+  var target = -Math.PI / 2 - (index * slice + slice / 2);
+  var k = Math.ceil((startRot + t * TAU - target) / TAU);
+  return target + k * TAU;
+}
+
+/* ---- 사다리: 가로줄 생성 / 실제 경로 추적 ---- */
+function makeRungs(n, rows, rand){
+  var r = rand || Math.random;
+  var rungs = [];
+  for (var row = 0; row < rows; row++) {
+    var c = 0;
+    while (c < n - 1) {
+      if (r() < 0.52) { rungs.push({ r: row, c: c }); c += 2; }
+      else { c += 1; }
+    }
+  }
+  return rungs;
+}
+function hasRung(rungs, row, col){
+  for (var i = 0; i < rungs.length; i++) {
+    if (rungs[i].r === row && rungs[i].c === col) return true;
+  }
+  return false;
+}
+/** 참여자 i 의 경로: [{row:-1, c:i}, ...] (row 는 가로줄 인덱스, c 는 이동 후 열) */
+function ladderPath(n, rows, rungs, i){
+  var steps = [{ row: -1, c: i }];
+  var c = i;
+  for (var row = 0; row < rows; row++) {
+    if (hasRung(rungs, row, c)) { c += 1; steps.push({ row: row, c: c }); }
+    else if (hasRung(rungs, row, c - 1)) { c -= 1; steps.push({ row: row, c: c }); }
+  }
+  return steps;
+}
+function ladderMap(n, rows, rungs){
+  var map = [];
+  for (var i = 0; i < n; i++) {
+    var p = ladderPath(n, rows, rungs, i);
+    map.push(p[p.length - 1].c);
+  }
+  return map;
+}
+/* =======================================================================
+   PURE LOGIC END
+   ======================================================================= */
+
+/* ============================ 상태 ============================ */
+var S = {
+  step: 1,
+  title: '금요일 회식 1차',
+  bills: [{ label: '1차', amount: 0 }],
+  activeBill: 0,
+  head: 4,
+  split: false,
+  alcohol: 0,
+  abstain: 0,
+  bank: '',
+  account: '',
+  topic: '☕ 커피 쏘기',
+  topicMode: 'preset',
+  customTopic: '',
+  players: ['지혜', '희도', '민수', '수진'],
+  game: null,
+  tab: 'roulette'
+};
+var COLORS = ['#FF6B6B', '#FFA94D', '#FFD43B', '#63C36B', '#2FC2B0', '#4C9AFF', '#8B7BFF', '#FF74C6', '#7D8CA3', '#C58B4E', '#4DBBD5', '#F06595'];
+
+/* ============================ 유틸 ============================ */
+function $(sel){ return document.querySelector(sel); }
+function $$(sel){
+  var out = [];
+  var list = document.querySelectorAll(sel);
+  for (var i = 0; i < list.length; i++) out.push(list[i]);
+  return out;
+}
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+var toastTimer = null;
+function toast(msg, ms){
+  var el = $('#toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.classList.remove('show'); }, ms || 1900);
+}
+function copyText(text){
+  return new Promise(function(resolve){
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function(){ resolve(true); }, function(){ resolve(fallbackCopy(text)); });
+        return;
+      }
+    } catch (e) { /* fall through */ }
+    resolve(fallbackCopy(text));
+  });
+}
+function fallbackCopy(text){
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '-1000px';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    if (ta.setSelectionRange) ta.setSelectionRange(0, text.length);
+    var ok = document.execCommand ? document.execCommand('copy') : false;
+    document.body.removeChild(ta);
+    return !!ok;
+  } catch (e) { return false; }
+}
+function digitsOnly(v){ return String(v).replace(/[^0-9]/g, ''); }
+
+/* 클립보드를 쓸 수 없는 환경(로컬 파일 · 구형 브라우저)에서 텍스트를 직접 고를 수 있게 보여준다 */
+function showCopySheet(text){
+  var sheet = $('#copySheet');
+  if (!sheet) return;
+  var ta = $('#copySheetText');
+  if (ta) ta.value = text;
+  sheet.classList.remove('hidden');
+  try { if (ta) { ta.focus(); ta.select(); } } catch (e) {}
+}
+function hideCopySheet(){
+  var sheet = $('#copySheet');
+  if (sheet) sheet.classList.add('hidden');
+}
+
+/* ============================ 정산 ============================ */
+function currentInput(){
+  var total = 0;
+  for (var i = 0; i < S.bills.length; i++) total += Number(S.bills[i].amount) || 0;
+  return { total: total, head: S.head, split: S.split, alcohol: S.alcohol, abstain: S.abstain };
+}
+
+function renderBills(){
+  var list = $('#billList');
+  if (!list) return;
+  list.innerHTML = '';
+  S.bills.forEach(function(b, i){
+    var row = document.createElement('div');
+    row.className = 'bill-row' + (i === S.activeBill ? ' active' : '');
+    row.innerHTML =
+      '<span class="bill-label">' + esc(b.label) + '</span>' +
+      '<div class="money-input">' +
+        '<input class="bill-input" data-i="' + i + '" inputmode="numeric" placeholder="0" aria-label="' + esc(b.label) + ' 금액" value="' + (b.amount ? fmt(b.amount) : '') + '">' +
+        '<span>원</span>' +
+      '</div>' +
+      (S.bills.length > 1 ? '<button class="bill-del" data-del="' + i + '" type="button" aria-label="' + esc(b.label) + ' 삭제">✕</button>' : '');
+    list.appendChild(row);
+  });
+
+  $$('#billList .bill-input').forEach(function(inp){
+    inp.addEventListener('input', function(){
+      var i = Number(inp.getAttribute('data-i'));
+      S.bills[i].amount = Number(digitsOnly(inp.value)) || 0;
+      updateCalc();
+    });
+    inp.addEventListener('focus', function(){
+      S.activeBill = Number(inp.getAttribute('data-i'));
+      markActiveBill();
+    });
+    inp.addEventListener('blur', function(){
+      var i = Number(inp.getAttribute('data-i'));
+      inp.value = S.bills[i].amount ? fmt(S.bills[i].amount) : '';
+      updateCalc();
+    });
+  });
+  $$('#billList .bill-del').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var i = Number(btn.getAttribute('data-del'));
+      S.bills.splice(i, 1);
+      if (S.activeBill >= S.bills.length) S.activeBill = S.bills.length - 1;
+      renderBills();
+      updateCalc();
+    });
+  });
+  markActiveBill();
+}
+
+function markActiveBill(){
+  $$('#billList .bill-row').forEach(function(row, i){
+    row.classList.toggle('active', i === S.activeBill);
+  });
+  var hint = $('#activeHint');
+  if (hint && S.bills[S.activeBill]) hint.textContent = S.bills[S.activeBill].label + ' 칸에 더해져요';
+}
+
+function addBill(){
+  S.bills.push({ label: nextBillLabel(), amount: 0 });
+  S.activeBill = S.bills.length - 1;
+  renderBills();
+  updateCalc();
+}
+function nextBillLabel(){
+  var max = 0;
+  S.bills.forEach(function(b){
+    var m = /^(\d+)차$/.exec(b.label);
+    if (m) max = Math.max(max, Number(m[1]));
+  });
+  return (max + 1) + '차';
+}
+
+function updateCalc(){
+  var r = calcSettlement(currentInput());
+  var plan = oddPlanFor(r, S.game);
+
+  $('#totalAmount').textContent = fmt(r.total) + '원';
+
+  var body = $('#resultBody');
+  var html = '';
+
+  if (r.total === 0) {
+    html = '<p class="blank-state">금액과 인원을 입력하면<br>1인당 금액이 바로 계산돼요.</p>';
+  } else if (plan) {
+    if (plan.multi) {
+      html =
+        '<div class="per-grid">' +
+          '<div class="per-box"><span>비음주 ' + plan.abstain + '명</span>' +
+            '<b>' + fmt(plan.baseA) + '원</b><small>나머지 기준</small></div>' +
+          '<div class="per-box highlight"><span>음주 ' + plan.drinkers + '명</span>' +
+            '<b>' + fmt(plan.baseD) + '원</b><small>나머지 기준</small></div>' +
+        '</div>';
+    } else if (plan.odd > 0) {
+      html =
+        '<div class="per-grid">' +
+          '<div class="per-box"><span>나머지 ' + (plan.head - 1) + '명</span>' +
+            '<b>' + fmt(plan.baseD) + '원</b></div>' +
+          '<div class="per-box highlight"><span>당첨자 ' + esc(plan.winner) + '</span>' +
+            '<b>' + fmt(plan.baseD + plan.odd) + '원</b><small>끝전 +' + fmt(plan.odd) + '원</small></div>' +
+        '</div>';
+    } else {
+      html =
+        '<div class="per-grid" style="grid-template-columns:1fr">' +
+          '<div class="per-box highlight"><span>1인당 (' + plan.head + '명)</span>' +
+            '<b>' + fmt(plan.baseD) + '원</b><small>끝전 없이 딱 맞아떨어져요</small></div>' +
+        '</div>';
+    }
+  } else if (!r.split || r.drinkers === 0 || r.abstain === 0) {
+    html =
+      '<div class="per-grid" style="grid-template-columns:1fr">' +
+        '<div class="per-box highlight">' +
+          '<span>1인당 (' + r.head + '명)</span>' +
+          '<b>' + fmt(r.perDrinker) + '원</b>' +
+          '<small>' + (r.alcohol > 0 ? '주류 포함' : '전체 금액 1/N') + '</small>' +
+        '</div>' +
+      '</div>';
+  } else {
+    html =
+      '<div class="per-grid">' +
+        '<div class="per-box">' +
+          '<span>비음주 ' + r.abstain + '명</span>' +
+          '<b>' + fmt(r.perAbstain) + '원</b>' +
+          '<small>음식값만</small>' +
+        '</div>' +
+        '<div class="per-box highlight">' +
+          '<span>음주 ' + r.drinkers + '명</span>' +
+          '<b>' + fmt(r.perDrinker) + '원</b>' +
+          '<small>음식값 + 주류</small>' +
+        '</div>' +
+      '</div>';
+  }
+  body.innerHTML = html;
+
+  var note = '';
+  if (plan) {
+    note = '';
+  } else if (r.total > 0 && r.split && r.abstain > 0 && r.drinkers > 0 && r.alcohol > 0) {
+    note = '🍺 음주자가 ' + fmt(r.perGap) + '원 더 내요 · 주류 ' + fmt(r.alcohol) + '원을 ' + r.drinkers + '명이 나눠요';
+  } else if (r.total > 0 && r.split && r.abstain > 0 && r.alcohol === 0) {
+    note = '주류 금액을 적으면 술 마신 사람에게만 더해져요';
+  } else if (r.total > 0 && r.diff > 0) {
+    note = '끝전 올림으로 ' + fmt(r.diff) + '원이 더 걷혀요';
+  } else if (r.total > 0 && r.diff < 0) {
+    note = fmt(-r.diff) + '원이 모자라요 · 총무가 채우면 딱 맞아요';
+  } else if (r.total > 0) {
+    note = '딱 맞게 나눠떨어져요 👌';
+  }
+  $('#roundNote').textContent = note;
+  $('#roundNote').style.display = note ? 'flex' : 'none';
+
+  var warnBox = $('#warnBox');
+  warnBox.innerHTML = r.warnings.map(function(w){
+    return '<p class="result-warn">' + esc(w) + '</p>';
+  }).join('');
+
+  // 인원 · 비음주 인원 표시 동기화
+  $('#headCount').textContent = S.head;
+  $('#abstCount').textContent = S.abstain;
+  $('#headMinus').disabled = S.head <= 1;
+  $('#headPlus').disabled = S.head >= 30;
+  $('#abstMinus').disabled = S.abstain <= 0;
+  $('#abstPlus').disabled = S.abstain >= S.head;
+
+  renderOddBox();
+  if (S.step === 3) renderShareSummary();
+}
+
+/* 1단계 결과 카드 아래: 끝전 몰아주기가 적용 중이면 최종 금액을 짚어준다 */
+function renderOddBox(){
+  var box = $('#oddBox');
+  if (!box) return;
+  var plan = oddPlanFor(calcSettlement(currentInput()), S.game);
+  if (!plan) {
+    box.innerHTML = '';
+    box.style.display = 'none';
+    return;
+  }
+  box.style.display = 'block';
+  box.innerHTML =
+    '<div class="result-odd">' +
+      '<b>💸 끝전 몰아주기 · ' + esc(plan.winner) + ' 당첨</b>' +
+      '<span>' + esc(oddPlainSummary(plan)) + '</span>' +
+    '</div>';
+}
+
+/* ============================ 게임 ============================ */
+function currentTopic(){
+  if (S.topicMode === 'custom') return (S.customTopic || '').trim() || '내기';
+  return S.topic;
+}
+
+function renderPlayers(){
+  var box = $('#playerList');
+  box.innerHTML = S.players.map(function(p, i){
+    return '<span class="player-chip">' + esc(p) +
+      '<button type="button" data-rm="' + i + '" aria-label="' + esc(p) + ' 삭제">✕</button></span>';
+  }).join('');
+  $$('#playerList button[data-rm]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var i = Number(btn.getAttribute('data-rm'));
+      if (S.players.length <= 1) { toast('참여자는 한 명 이상 필요해요'); return; }
+      S.players.splice(i, 1);
+      onPlayersChanged();
+    });
+  });
+  $('#playerCount').textContent = S.players.length + '명';
+}
+
+function addPlayer(){
+  var inp = $('#playerInput');
+  var name = (inp.value || '').trim();
+  if (!name) { inp.focus(); return; }
+  if (S.players.length >= 12) { toast('참여자는 최대 12명까지 넣을 수 있어요'); return; }
+  if (S.players.indexOf(name) !== -1) { toast('이미 있는 이름이에요'); return; }
+  S.players.push(name);
+  inp.value = '';
+  onPlayersChanged();
+  inp.focus();
+}
+
+function onPlayersChanged(){
+  S.game = null;
+  hideGameResult();
+  renderPlayers();
+  drawRoulette();
+  buildLadder();
+  if (S.step === 3) renderShareSummary();
+}
+
+/* ---------- 룰렛 ---------- */
+var rot = 0;
+var spinning = false;
+var raf = (typeof window !== 'undefined' && window.requestAnimationFrame)
+  ? window.requestAnimationFrame.bind(window)
+  : function(cb){ return setTimeout(function(){ cb(Date.now()); }, 16); };
+
+function fitCanvas(cv){
+  var rect = cv.getBoundingClientRect ? cv.getBoundingClientRect() : { width: 0, height: 0 };
+  var w = Math.max(160, Math.round(rect.width || 320));
+  var h = Math.max(120, Math.round(rect.height || (cv.id === 'ladderCanvas' ? 352 : w)));
+  var dpr = Math.min((window.devicePixelRatio || 1), 2.5);
+  var bw = Math.round(w * dpr), bh = Math.round(h * dpr);
+  // 매 프레임 재할당하지 않도록 크기가 달라질 때만 버퍼를 다시 잡는다
+  if (cv.width !== bw || cv.height !== bh) {
+    cv.width = bw;
+    cv.height = bh;
+  }
+  var ctx = cv.getContext('2d');
+  if (ctx && ctx.setTransform) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx: ctx, w: w, h: h, dpr: dpr };
+}
+
+function drawRoulette(){
+  var cv = $('#rouletteCanvas');
+  if (!cv) return;
+  var g = fitCanvas(cv);
+  var ctx = g.ctx;
+  if (!ctx) return;
+  var w = g.w, h = g.h;
+  var size = Math.min(w, h);
+  var cx = w / 2, cy = h / 2;
+  var R = size / 2 - 10;
+
+  ctx.clearRect(0, 0, w, h);
+
+  var n = S.players.length || 1;
+  var slice = TAU / n;
+
+  for (var i = 0; i < n; i++) {
+    var a0 = i * slice + rot;
+    var a1 = a0 + slice;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, R, a0, a1);
+    ctx.closePath();
+    ctx.fillStyle = COLORS[i % COLORS.length];
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255,255,255,.6)';
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(a0 + slice / 2);
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fff';
+    var fs = n > 8 ? 11 : (n > 5 ? 14 : 16);
+    ctx.font = '800 ' + fs + 'px -apple-system, system-ui, sans-serif';
+    var name = S.players[i] || '';
+    if (name.length > 6) name = name.slice(0, 6) + '…';
+    ctx.fillText(name, R - 16, 0);
+    ctx.restore();
+  }
+
+  // 가운데 허브
+  ctx.beginPath();
+  ctx.arc(cx, cy, size * 0.105, 0, TAU);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx, cy, size * 0.085, 0, TAU);
+  ctx.fillStyle = '#191F28';
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = '900 ' + Math.round(size * 0.055) + 'px -apple-system, system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('GO', cx, cy + 1);
+
+  // 상단 고정 화살표 (12시 방향)
+  var pw = size * 0.042;
+  var topY = cy - R;
+  ctx.beginPath();
+  ctx.moveTo(cx, topY + pw * 1.1);
+  ctx.lineTo(cx - pw, topY - pw * 1.7);
+  ctx.lineTo(cx + pw, topY - pw * 1.7);
+  ctx.closePath();
+  ctx.fillStyle = '#191F28';
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#ffffff';
+  ctx.stroke();
+}
+
+function spinRoulette(){
+  if (spinning) return;
+  var n = S.players.length;
+  if (n < 2) { toast('참여자를 2명 이상 넣어주세요'); return; }
+
+  spinning = true;
+  S.game = null;
+  hideGameResult();
+  var btn = $('#spinBtn');
+  btn.disabled = true;
+  btn.textContent = '돌리는 중…';
+
+  var winIdx = Math.floor(Math.random() * n);
+  var start = rot;
+  var end = targetRotation(start, winIdx, n, 5 + Math.floor(Math.random() * 3));
+  var duration = 3600;
+  var t0 = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+  function frame(t){
+    var p = Math.min(1, (t - t0) / duration);
+    var e = 1 - Math.pow(1 - p, 3); // easeOutCubic
+    rot = start + (end - start) * e;
+    drawRoulette();
+    if (p < 1) {
+      raf(frame);
+    } else {
+      rot = ((rot % TAU) + TAU) % TAU;
+      drawRoulette();
+      spinning = false;
+      btn.disabled = false;
+      btn.textContent = '돌리기';
+      var idx = pointerIndex(rot, n); // 최종 회전각에서 실제로 가리키는 칸
+      S.game = {
+        type: 'roulette',
+        topic: currentTopic(),
+        winner: S.players[idx],
+        players: S.players.slice(),
+        at: new Date().toISOString()
+      };
+      showGameResult();
+      if (S.step === 3) renderShareSummary();
+    }
+  }
+  raf(frame);
+}
+
+/* ---------- 사다리 ---------- */
+var LADDER_ROWS = 9;
+var ladder = null;
+var revealing = false;
+
+function buildLadder(){
+  var n = S.players.length;
+  var rows = LADDER_ROWS;
+  var rungs = makeRungs(n, rows, Math.random);
+  var map = ladderMap(n, rows, rungs);
+  var winCol = Math.floor(Math.random() * n);
+  var results = [];
+  for (var i = 0; i < n; i++) results.push('통과');
+  results[winCol] = '당첨';
+  ladder = {
+    rows: rows,
+    rungs: rungs,
+    map: map,
+    results: results,
+    winCol: winCol,
+    progress: 0,
+    revealed: false
+  };
+  S.game = null;
+  hideGameResult();
+  drawLadder();
+}
+
+function drawLadder(){
+  var cv = $('#ladderCanvas');
+  if (!cv || !ladder) return;
+  var g = fitCanvas(cv);
+  var ctx = g.ctx;
+  if (!ctx) return;
+  var W = g.w, H = g.h;
+  var n = S.players.length;
+
+  ctx.clearRect(0, 0, W, H);
+  if (n < 2) return;
+
+  var padX = n > 8 ? 16 : 24;
+  var topY = 34;
+  var bottomY = H - 40;
+  var gap = (W - padX * 2) / (n - 1);
+  var colX = function(c){ return padX + c * gap; };
+  var rowY = function(r){ return topY + (bottomY - topY) * ((r + 0.5) / ladder.rows); };
+
+  // 참여자 이름
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (var i = 0; i < n; i++) {
+    var isWin = ladder.revealed && ladder.map[i] === ladder.winCol;
+    ctx.fillStyle = isWin ? '#FF5B45' : '#4E5968';
+    ctx.font = (isWin ? '900 ' : '700 ') + (n > 8 ? 11 : 12.5) + 'px -apple-system, system-ui, sans-serif';
+    var nm = S.players[i] || '';
+    if (nm.length > 5) nm = nm.slice(0, 5) + '…';
+    ctx.fillText(nm, colX(i), 14);
+    ctx.beginPath();
+    ctx.arc(colX(i), topY - 9, 3.2, 0, TAU);
+    ctx.fillStyle = isWin ? '#FF5B45' : '#C3CAD2';
+    ctx.fill();
+  }
+
+  // 기본 사다리 (연한 회색)
+  ctx.strokeStyle = '#DCE2E9';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  for (var c = 0; c < n; c++) {
+    ctx.beginPath();
+    ctx.moveTo(colX(c), topY);
+    ctx.lineTo(colX(c), bottomY);
+    ctx.stroke();
+  }
+  ladder.rungs.forEach(function(rg){
+    ctx.beginPath();
+    ctx.moveTo(colX(rg.c), rowY(rg.r));
+    ctx.lineTo(colX(rg.c + 1), rowY(rg.r));
+    ctx.stroke();
+  });
+
+  // 결과 라벨 자리
+  ctx.font = '800 ' + (n > 8 ? 11 : 12.5) + 'px -apple-system, system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (var k = 0; k < n; k++) {
+    var label = ladder.revealed ? ladder.results[k] : '?';
+    ctx.fillStyle = ladder.revealed
+      ? (ladder.results[k] === '당첨' ? '#FF5B45' : '#9AA4B0')
+      : '#C3CAD2';
+    ctx.fillText(label, colX(k), bottomY + 20);
+  }
+
+  // 경로 애니메이션
+  if (ladder.progress > 0) {
+    for (var p = 0; p < n; p++) {
+      var steps = ladderPath(n, ladder.rows, ladder.rungs, p);
+      var pts = [];
+      var curC = p;
+      pts.push({ x: colX(p), y: topY });
+      for (var s = 1; s < steps.length; s++) {
+        var st = steps[s];
+        var y = rowY(st.row);
+        pts.push({ x: colX(curC), y: y });
+        pts.push({ x: colX(st.c), y: y });
+        curC = st.c;
+      }
+      pts.push({ x: colX(curC), y: bottomY });
+
+      // 전체 길이
+      var total = 0;
+      for (var q = 1; q < pts.length; q++) {
+        total += Math.abs(pts[q].x - pts[q - 1].x) + Math.abs(pts[q].y - pts[q - 1].y);
+      }
+      var target = total * ladder.progress;
+      var acc = 0;
+      var isWinner = ladder.map[p] === ladder.winCol;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (var m = 1; m < pts.length; m++) {
+        var segLen = Math.abs(pts[m].x - pts[m - 1].x) + Math.abs(pts[m].y - pts[m - 1].y);
+        if (acc + segLen <= target) {
+          ctx.lineTo(pts[m].x, pts[m].y);
+          acc += segLen;
+        } else {
+          var rem = target - acc;
+          if (rem > 0) {
+            var dx = pts[m].x - pts[m - 1].x;
+            var dy = pts[m].y - pts[m - 1].y;
+            var len = Math.abs(dx) + Math.abs(dy) || 1;
+            ctx.lineTo(pts[m - 1].x + dx * (rem / len), pts[m - 1].y + dy * (rem / len));
+          }
+          break;
+        }
+      }
+      ctx.strokeStyle = isWinner ? '#FF5B45' : COLORS[p % COLORS.length];
+      ctx.lineWidth = isWinner ? 4 : 3;
+      ctx.stroke();
+    }
+  }
+}
+
+function shuffleLadder(){
+  if (revealing) return;
+  buildLadder();
+  toast('사다리를 새로 섞었어요');
+}
+
+function revealLadder(){
+  if (revealing || !ladder) return;
+  if (S.players.length < 2) { toast('참여자를 2명 이상 넣어주세요'); return; }
+
+  revealing = true;
+  ladder.revealed = false;
+  ladder.progress = 0;
+  S.game = null;
+  hideGameResult();
+  var btn = $('#revealBtn');
+  btn.disabled = true;
+  btn.textContent = '내려가는 중…';
+
+  var duration = 1500;
+  var t0 = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+  function frame(t){
+    var p = Math.min(1, (t - t0) / duration);
+    ladder.progress = p;
+    if (p >= 1) ladder.revealed = true;
+    drawLadder();
+    if (p < 1) {
+      raf(frame);
+    } else {
+      revealing = false;
+      btn.disabled = false;
+      btn.textContent = '결과 확인하기';
+      var winner = null;
+      for (var i = 0; i < S.players.length; i++) {
+        if (ladder.map[i] === ladder.winCol) { winner = S.players[i]; break; }
+      }
+      S.game = {
+        type: 'ladder',
+        topic: currentTopic(),
+        winner: winner,
+        players: S.players.slice(),
+        at: new Date().toISOString()
+      };
+      showGameResult();
+      if (S.step === 3) renderShareSummary();
+    }
+  }
+  raf(frame);
+}
+
+/* ---------- 결과 배너 ---------- */
+function hideGameResult(){
+  var el = $('#gameResult');
+  if (el) { el.classList.add('hidden'); el.innerHTML = ''; }
+  updateCalc();
+  updateNextLabel();
+}
+
+function showGameResult(){
+  var el = $('#gameResult');
+  if (!el || !S.game) return;
+  var typeLabel = S.game.type === 'ladder' ? '사다리타기' : '룰렛';
+  var plan = oddPlanFor(calcSettlement(currentInput()), S.game);
+  var sub = plan
+    ? oddNoteText(plan)
+    : S.game.winner + ' 님이 ' + shortTopic(S.game.topic) + ' 담당이에요';
+  el.classList.remove('hidden');
+  el.innerHTML =
+    '<span class="gr-emoji">🎉</span>' +
+    '<p class="gr-topic">' + esc(S.game.topic) + ' · ' + typeLabel + '</p>' +
+    '<b class="gr-name">' + esc(S.game.winner) + '</b>' +
+    '<p class="gr-sub">당첨! ' + esc(sub) + '</p>' +
+    oddBannerHtml(plan);
+  if (el.scrollIntoView) {
+    try { el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {}
+  }
+  updateCalc();
+  updateNextLabel();
+}
+function shortTopic(topic){
+  var t = String(topic || '내기');
+  // 이모지 + 동작만 남기기 (예: "☕ 커피 쏘기" -> "커피 쏘기")
+  return t.replace(/^[^\w가-힣]+/, '').trim() || t;
+}
+
+/* ---------- 끝전 몰아주기 표시 (배너 · 요약 · 친구 뷰 · 카톡 텍스트 공용) ---------- */
+function gameTypeLabel(game){
+  return game && game.type === 'ladder' ? '🪜 사다리타기' : '🎡 룰렛';
+}
+function oddNoteText(plan){
+  if (!plan) return '';
+  if (plan.odd > 0) {
+    return '끝전 ' + fmt(plan.odd) + '원을 ' + plan.winner + ' 님이 더 내요';
+  }
+  return '끝전 없이 딱 맞아떨어져요';
+}
+/** 한 줄 요약: '당첨자 민수 54,000원 · 나머지 3명 52,000원' */
+function oddPlainSummary(plan){
+  if (!plan) return '';
+  if (plan.multi) {
+    if (plan.odd > 0) {
+      return '당첨자 ' + plan.winner + ' 음주 ' + fmt(plan.winnerD) + '원 / 비음주 ' + fmt(plan.winnerA) +
+             '원 · 나머지 1인당 음주 ' + fmt(plan.baseD) + '원 / 비음주 ' + fmt(plan.baseA) + '원';
+    }
+    return '음주 ' + fmt(plan.baseD) + '원 · 비음주 ' + fmt(plan.baseA) + '원 (끝전 없음)';
+  }
+  if (plan.odd > 0) {
+    return '당첨자 ' + plan.winner + ' ' + fmt(plan.baseD + plan.odd) + '원 · 나머지 ' + (plan.head - 1) + '명 ' + fmt(plan.baseD) + '원';
+  }
+  return '1인당 ' + fmt(plan.baseD) + '원 (끝전 없음)';
+}
+/** 2단계 게임 결과 배너 안의 금액 표 */
+function oddBannerHtml(plan){
+  if (!plan) return '';
+  var rows = '';
+  if (plan.multi) {
+    if (plan.odd > 0) {
+      rows +=
+        '<div class="gr-odd-row"><span>당첨자 ' + esc(plan.winner) + ' · 음주</span><b>' + fmt(plan.winnerD) + '원</b></div>' +
+        '<div class="gr-odd-row"><span>당첨자 ' + esc(plan.winner) + ' · 비음주</span><b>' + fmt(plan.winnerA) + '원</b></div>';
+    }
+    rows += '<div class="gr-odd-row"><span>나머지 1인당</span><b>음주 ' + fmt(plan.baseD) + '원 / 비음주 ' + fmt(plan.baseA) + '원</b></div>';
+  } else if (plan.odd > 0) {
+    rows +=
+      '<div class="gr-odd-row"><span>당첨자 ' + esc(plan.winner) + '</span><b>' + fmt(plan.baseD + plan.odd) + '원</b></div>' +
+      '<div class="gr-odd-row"><span>나머지 ' + (plan.head - 1) + '명</span><b>' + fmt(plan.baseD) + '원</b></div>';
+  } else {
+    rows += '<div class="gr-odd-row"><span>1인당</span><b>' + fmt(plan.baseD) + '원</b></div>';
+  }
+  if (plan.odd > 0) {
+    rows += '<div class="gr-odd-row"><span>끝전</span><b>+' + fmt(plan.odd) + '원 (' + fmt(plan.unit) + '원 단위로 정리)</b></div>';
+  }
+  return '<div class="gr-odd">' + rows + '</div>';
+}
+/** 3단계 공유 요약의 게임 카드 안에 붙는 끝전 내역 */
+function oddSummaryHtml(plan){
+  if (!plan) return '';
+  var rows = '';
+  if (plan.multi) {
+    if (plan.odd > 0) {
+      rows +=
+        '<div class="sp-row"><span>' + esc(plan.winner) + ' · 음주 기준</span><b>' + fmt(plan.winnerD) + '원</b></div>' +
+        '<div class="sp-row"><span>' + esc(plan.winner) + ' · 비음주 기준</span><b>' + fmt(plan.winnerA) + '원</b></div>';
+    }
+    rows += '<div class="sp-row"><span>나머지 1인당</span><b>음주 ' + fmt(plan.baseD) + '원 · 비음주 ' + fmt(plan.baseA) + '원</b></div>';
+  } else if (plan.odd > 0) {
+    rows +=
+      '<div class="sp-row"><span>당첨자 ' + esc(plan.winner) + '</span><b>' + fmt(plan.baseD + plan.odd) + '원</b></div>' +
+      '<div class="sp-row"><span>나머지 ' + (plan.head - 1) + '명</span><b>' + fmt(plan.baseD) + '원</b></div>';
+  } else {
+    rows += '<div class="sp-row"><span>1인당</span><b>' + fmt(plan.baseD) + '원</b></div>';
+  }
+  return '<div class="sp-odd"><p class="sp-odd-note">💸 ' + esc(oddNoteText(plan)) + '</p>' + rows + '</div>';
+}
+/** 친구 뷰의 게임 카드 안에 붙는 끝전 내역 */
+function oddFriendHtml(plan){
+  if (!plan) return '';
+  var rows = '';
+  if (plan.multi) {
+    if (plan.odd > 0) {
+      rows +=
+        '<div class="sg-odd-row"><span>음주 기준</span><b>' + fmt(plan.winnerD) + '원</b></div>' +
+        '<div class="sg-odd-row"><span>비음주 기준</span><b>' + fmt(plan.winnerA) + '원</b></div>';
+    }
+    rows += '<div class="sg-odd-row"><span>나머지 1인당</span><b>음주 ' + fmt(plan.baseD) + '원 · 비음주 ' + fmt(plan.baseA) + '원</b></div>';
+  } else if (plan.odd > 0) {
+    rows +=
+      '<div class="sg-odd-row"><span>' + esc(plan.winner) + ' (끝전 +' + fmt(plan.odd) + '원)</span><b>' + fmt(plan.baseD + plan.odd) + '원</b></div>' +
+      '<div class="sg-odd-row"><span>나머지 ' + (plan.head - 1) + '명</span><b>' + fmt(plan.baseD) + '원</b></div>';
+  } else {
+    rows += '<div class="sg-odd-row"><span>1인당</span><b>' + fmt(plan.baseD) + '원</b></div>';
+  }
+  return '<div class="sg-odd">' + rows + '</div>';
+}
+
+/* ============================ 공유 ============================ */
+function buildPayload(){
+  var r = calcSettlement(currentInput());
+  return {
+    v: 1,
+    t: (S.title || '').trim() || '모임 정산',
+    total: r.total,
+    head: r.head,
+    split: S.split,
+    alc: S.alcohol,
+    abst: S.abstain,
+    bank: S.bank || '',
+    acct: S.account || '',
+    game: S.game ? {
+      type: S.game.type,
+      topic: S.game.topic,
+      winner: S.game.winner,
+      players: S.game.players
+    } : null,
+    at: new Date().toISOString().slice(0, 10)
+  };
+}
+
+function shareLink(){
+  var payload = buildPayload();
+  return location.href.split('#')[0] + '#share=' + b64encode(JSON.stringify(payload));
+}
+
+/* 카톡에 그대로 붙여넣는 정산 내역 텍스트 */
+function kakaoLines(){
+  var r = calcSettlement(currentInput());
+  var plan = oddPlanFor(r, S.game);
+  var title = (S.title || '').trim() || '모임 정산';
+  var lines = ['🎉 ' + title, ''];
+
+  if (r.total === 0) {
+    lines.push('아직 정산 금액이 없어요.');
+    return lines;
+  }
+
+  lines.push('총 ' + fmt(r.total) + '원 · ' + r.head + '명');
+
+  if (plan) {
+    lines.push('💸 끝전 몰아주기 → ' + plan.winner + ' 당첨');
+    lines.push('');
+    if (plan.multi) {
+      if (plan.odd > 0) {
+        lines.push('· ' + plan.winner + ': 음주 ' + fmt(plan.winnerD) + '원 / 비음주 ' + fmt(plan.winnerA) + '원 (끝전 ' + fmt(plan.odd) + '원 포함)');
+        lines.push('· 나머지 1인당: 음주 ' + fmt(plan.baseD) + '원 · 비음주 ' + fmt(plan.baseA) + '원');
+      } else {
+        lines.push('· 음주 ' + fmt(plan.baseD) + '원 · 비음주 ' + fmt(plan.baseA) + '원');
+        lines.push('· 끝전 없이 딱 맞아떨어져요');
+      }
+    } else if (plan.odd > 0) {
+      lines.push('· ' + plan.winner + ': ' + fmt(plan.baseD + plan.odd) + '원 (끝전 ' + fmt(plan.odd) + '원 포함)');
+      lines.push('· 나머지 ' + (plan.head - 1) + '명: ' + fmt(plan.baseD) + '원');
+    } else {
+      lines.push('· 1인당 ' + fmt(plan.baseD) + '원 (끝전 없이 딱 맞아떨어져요)');
+    }
+  } else {
+    if (r.split && r.abstain > 0 && r.drinkers > 0) {
+      lines.push('· 비음주 ' + r.abstain + '명: ' + fmt(r.perAbstain) + '원');
+      lines.push('· 음주 ' + r.drinkers + '명: ' + fmt(r.perDrinker) + '원');
+    } else {
+      lines.push('· 1인당 ' + fmt(r.perDrinker) + '원');
+    }
+    if (S.game && S.game.winner) {
+      lines.push(gameTypeLabel(S.game) + ' · ' + S.game.topic + ' → ' + S.game.winner + ' 당첨');
+    }
+    if (r.diff !== 0) {
+      lines.push('· ' + fmt(Math.abs(r.diff)) + '원은 총무가 ' + (r.diff < 0 ? '채워요' : '챙겨요'));
+    }
+  }
+
+  var acct = ((S.bank ? S.bank + ' ' : '') + (S.account || '')).trim();
+  if (acct) {
+    lines.push('');
+    lines.push('💰 총무 계좌');
+    lines.push(acct);
+  }
+  return lines;
+}
+function buildKakaoText(){ return kakaoLines().join('\n'); }
+
+function renderShareSummary(){
+  var box = $('#shareSummary');
+  if (!box) return;
+  var r = calcSettlement(currentInput());
+  var plan = oddPlanFor(r, S.game);
+  var html = '';
+
+  if (r.total === 0) {
+    html += '<div class="share-summary"><div class="sp-title">아직 정산 금액이 없어요</div>' +
+            '<div class="sp-meta">1단계에서 금액을 입력해 주세요.</div></div>';
+  } else {
+    html += '<div class="share-summary">' +
+      '<div class="sp-title">' + esc((S.title || '').trim() || '모임 정산') + '</div>' +
+      '<div class="sp-meta">총 ' + fmt(r.total) + '원 · ' + r.head + '명</div>' +
+      '<div class="sp-rows">';
+    if (plan) {
+      if (plan.multi) {
+        html += '<div class="sp-row"><span>비음주 ' + plan.abstain + '명 (나머지)</span><b>' + fmt(plan.baseA) + '원</b></div>' +
+                '<div class="sp-row"><span>음주 ' + plan.drinkers + '명 (나머지)</span><b>' + fmt(plan.baseD) + '원</b></div>';
+      } else if (plan.odd > 0) {
+        html += '<div class="sp-row"><span>나머지 ' + (plan.head - 1) + '명</span><b>' + fmt(plan.baseD) + '원</b></div>' +
+                '<div class="sp-row"><span>당첨자 ' + esc(plan.winner) + '</span><b>' + fmt(plan.baseD + plan.odd) + '원</b></div>';
+      } else {
+        html += '<div class="sp-row"><span>1인당</span><b>' + fmt(plan.baseD) + '원</b></div>';
+      }
+    } else if (r.split && r.abstain > 0 && r.drinkers > 0) {
+      html += '<div class="sp-row"><span>비음주 ' + r.abstain + '명</span><b>' + fmt(r.perAbstain) + '원</b></div>' +
+              '<div class="sp-row"><span>음주 ' + r.drinkers + '명</span><b>' + fmt(r.perDrinker) + '원</b></div>';
+    } else {
+      html += '<div class="sp-row"><span>1인당</span><b>' + fmt(r.perDrinker) + '원</b></div>';
+    }
+    html += '</div>';
+    if (S.account) {
+      html += '<div class="sp-row" style="margin-top:6px"><span>총무 계좌</span><b>' + esc((S.bank ? S.bank + ' ' : '') + S.account) + '</b></div>';
+    }
+    html += '</div></div>';
+  }
+
+  if (S.game) {
+    html += '<div class="sp-game">' + gameTypeLabel(S.game) +
+            ' · ' + esc(S.game.topic) + ' → <b>' + esc(S.game.winner) + ' 당첨</b>' +
+            oddSummaryHtml(plan) +
+            '</div>';
+  }
+
+  box.innerHTML = html;
+
+  var hint = $('#shareHint');
+  if (hint) {
+    hint.textContent = (location.protocol === 'file:'
+      ? '지금은 파일로 열어둔 상태라 복사한 링크는 이 기기에서만 열려요. 카톡용 정산 내역을 복사해 붙여넣으면 친구에게 바로 보낼 수 있어요.'
+      : (S.game
+          ? '링크를 받은 친구는 앱 설치 없이 정산 결과와 게임 결과를 바로 볼 수 있어요.'
+          : '링크를 받은 친구는 앱 설치 없이 정산 결과를 바로 볼 수 있어요.'));
+  }
+}
+
+function renderFriendView(data){
+  var r = calcSettlement({
+    total: data.total,
+    head: data.head,
+    split: data.split,
+    alcohol: data.alc,
+    abstain: data.abst
+  });
+  // 게임 없이 공유된 링크(또는 비어 있는 게임 값)는 결과 카드를 그리지 않는다
+  var game = (data.game && typeof data.game === 'object' && data.game.winner) ? data.game : null;
+  var plan = oddPlanFor(r, game);
+
+  var acctText = ((data.bank ? data.bank + ' ' : '') + (data.acct || '')).trim();
+  var dateText = '';
+  if (data.at) {
+    var d = new Date(data.at + 'T00:00:00');
+    if (!isNaN(d.getTime())) {
+      dateText = d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일';
+    }
+  }
+
+  var perHtml = '';
+  if (r.total === 0) {
+    perHtml = '<p class="blank-state" style="color:#8B95A1">금액이 입력되지 않았어요.</p>';
+  } else if (plan) {
+    if (plan.multi) {
+      perHtml =
+        '<div class="per-grid">' +
+          '<div class="per-box"><span>비음주 ' + plan.abstain + '명</span><b>' + fmt(plan.baseA) + '원</b><small>나머지 기준</small></div>' +
+          '<div class="per-box highlight"><span>음주 ' + plan.drinkers + '명</span><b>' + fmt(plan.baseD) + '원</b><small>나머지 기준</small></div>' +
+        '</div>';
+    } else if (plan.odd > 0) {
+      perHtml =
+        '<div class="per-grid">' +
+          '<div class="per-box"><span>나머지 ' + (plan.head - 1) + '명</span><b>' + fmt(plan.baseD) + '원</b></div>' +
+          '<div class="per-box highlight"><span>당첨자 ' + esc(plan.winner) + '</span><b>' + fmt(plan.baseD + plan.odd) + '원</b><small>끝전 +' + fmt(plan.odd) + '원</small></div>' +
+        '</div>';
+    } else {
+      perHtml =
+        '<div class="per-grid" style="grid-template-columns:1fr">' +
+          '<div class="per-box highlight"><span>1인당 (' + r.head + '명)</span><b>' + fmt(plan.baseD) + '원</b></div>' +
+        '</div>';
+    }
+  } else if (r.split && r.abstain > 0 && r.drinkers > 0) {
+    perHtml =
+      '<div class="per-grid">' +
+        '<div class="per-box"><span>비음주 ' + r.abstain + '명</span><b>' + fmt(r.perAbstain) + '원</b><small>음식값만</small></div>' +
+        '<div class="per-box highlight"><span>음주 ' + r.drinkers + '명</span><b>' + fmt(r.perDrinker) + '원</b><small>음식값 + 주류</small></div>' +
+      '</div>';
+  } else {
+    perHtml =
+      '<div class="per-grid" style="grid-template-columns:1fr">' +
+        '<div class="per-box highlight"><span>1인당 (' + r.head + '명)</span><b>' + fmt(r.perDrinker) + '원</b></div>' +
+      '</div>';
+  }
+
+  var gameHtml = '';
+  if (game) {
+    gameHtml =
+      '<div class="share-game">' +
+        '<span class="sg-tag">' + (game.type === 'ladder' ? '🪜 사다리타기' : '🎡 룰렛') + '</span>' +
+        '<p class="sg-topic">' + esc(game.topic || '내기') + '</p>' +
+        '<p class="sg-winner">' + esc(game.winner) + '<span>당첨</span></p>' +
+        oddFriendHtml(plan) +
+        (game.players && game.players.length
+          ? '<p class="sg-players">참여자 ' + game.players.length + '명 · ' + esc(game.players.join(', ')) + '</p>'
+          : '') +
+      '</div>';
+  }
+
+  $('#shareView').innerHTML =
+    '<div class="share-head">' +
+      '<span class="badge">모임 정산 결과</span>' +
+      '<h1>' + esc(data.t || '모임 정산') + '</h1>' +
+      '<p>' + esc(dateText) + (dateText ? ' · ' : '') + '총 ' + r.head + '명</p>' +
+    '</div>' +
+    '<div class="card result-card">' +
+      '<div class="result-top"><span>총 결제 금액</span><b>' + fmt(r.total) + '원</b></div>' +
+      perHtml +
+      (plan
+        ? '<p class="result-note">💸 ' + esc(oddNoteText(plan)) + '</p>'
+        : (r.split && r.abstain > 0 && r.drinkers > 0 && r.alcohol > 0
+          ? '<p class="result-note">🍺 음주자가 ' + fmt(r.perGap) + '원 더 내요 · 주류 ' + fmt(r.alcohol) + '원을 ' + r.drinkers + '명이 나눠요</p>'
+          : '')) +
+    '</div>' +
+    '<div class="card">' +
+      (acctText
+        ? '<div class="acct-box">' +
+            '<div><span>총무 계좌</span><b>' + esc(acctText) + '</b></div>' +
+            '<button class="acct-copy" id="friendCopyBtn" type="button">복사</button>' +
+          '</div>'
+        : '<p class="sub">총무 계좌가 등록되지 않았어요.</p>') +
+    '</div>' +
+    gameHtml +
+    '<div style="padding:6px 16px 0">' +
+      '<button class="secondary-btn" id="newSplitBtn" type="button">나도 새로 정산하기</button>' +
+    '</div>';
+
+  var copyBtn = $('#friendCopyBtn');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function(){
+      copyText(acctText).then(function(ok){
+        toast(ok ? '계좌번호를 복사했어요' : '복사가 안 돼요. 길게 눌러 복사해 주세요');
+      });
+    });
+  }
+  var newBtn = $('#newSplitBtn');
+  if (newBtn) {
+    newBtn.addEventListener('click', function(){
+      location.hash = '';
+      showApp();
+      goStep(1);
+    });
+  }
+}
+
+function renderShareError(){
+  $('#shareView').innerHTML =
+    '<div class="share-head">' +
+      '<span class="badge">모임 정산 결과</span>' +
+      '<h1>링크를 읽을 수 없어요</h1>' +
+      '<p>링크가 일부 잘렸거나 오래된 형식일 수 있어요.</p>' +
+    '</div>' +
+    '<div style="padding:6px 16px 0">' +
+      '<button class="secondary-btn" id="newSplitBtn2" type="button">나도 새로 정산하기</button>' +
+    '</div>';
+  var b = $('#newSplitBtn2');
+  if (b) {
+    b.addEventListener('click', function(){
+      location.hash = '';
+      showApp();
+      goStep(1);
+    });
+  }
+}
+
+function showShareView(data){
+  renderFriendView(data);
+  $('#app').classList.add('hidden');
+  $('#shareView').classList.remove('hidden');
+  window.scrollTo(0, 0);
+}
+function showApp(){
+  $('#shareView').classList.add('hidden');
+  $('#app').classList.remove('hidden');
+}
+
+function handleHash(){
+  var m = location.hash.match(/^#share=(.+)$/);
+  if (!m) { showApp(); return; }
+  try {
+    var json = b64decode(decodeURIComponent(m[1]));
+    var data = JSON.parse(json);
+    if (!data || typeof data !== 'object') throw new Error('bad payload');
+    if (typeof data.total !== 'number' || typeof data.head !== 'number') throw new Error('bad payload');
+    // 게임 없이 공유된 링크: game 이 null/없음/빈 값이면 그대로 비운 채로 읽는다
+    if (data.game && (typeof data.game !== 'object' || !data.game.winner)) data.game = null;
+    showShareView(data);
+  } catch (e) {
+    renderShareError();
+    $('#app').classList.add('hidden');
+    $('#shareView').classList.remove('hidden');
+  }
+}
+
+/* ============================ 스텝 ============================ */
+/* 다음 버튼 문구: 2단계에서 게임 결과가 있으면 '결과 공유하기', 없으면 건너뛰기 안내 */
+function updateNextLabel(){
+  var next = $('#nextBtn');
+  if (!next) return;
+  if (S.step === 1) {
+    next.textContent = '다음: 미니게임';
+  } else if (S.step === 2) {
+    next.textContent = S.game ? '결과 공유하기' : '게임 건너뛰고 결과 공유';
+  }
+}
+
+/* 단계별 하단 버튼 구성 (1단계에만 '게임 없이 바로 결과 공유' 노출) */
+function updateBottomBar(){
+  var n = S.step;
+  var prev = $('#prevBtn');
+  var next = $('#nextBtn');
+  var skip = $('#skipGameBtn');
+  var bar = $('#bottombar');
+  var app = $('#app');
+  if (prev) prev.classList.toggle('hidden', n === 1);
+  if (next) next.classList.toggle('hidden', n === 3);
+  if (skip) skip.classList.toggle('hidden', n !== 1);
+  if (bar) bar.classList.toggle('wide', n === 3);
+  if (app) app.classList.toggle('pad-lg', n === 1);
+  if (document.body) document.body.classList.toggle('tall-bar', n === 1);
+  updateNextLabel();
+}
+
+/* 게임을 돌리지 않고 바로 3단계 공유로 이동 (게임 데이터는 비운다) */
+function skipGameAndShare(){
+  S.game = null;
+  hideGameResult();
+  goStep(3);
+}
+
+function goStep(n){
+  S.step = n;
+  for (var i = 1; i <= 3; i++) {
+    var panel = $('#panel' + i);
+    if (panel) panel.classList.toggle('hidden', i !== n);
+  }
+  $$('.step-pill').forEach(function(pill){
+    pill.classList.toggle('active', Number(pill.getAttribute('data-step')) === n);
+  });
+
+  updateBottomBar();
+
+  if (n === 2) {
+    renderPlayers();
+    drawRoulette();
+    if (!ladder) buildLadder(); else drawLadder();
+  }
+  if (n === 3) renderShareSummary();
+  window.scrollTo(0, 0);
+}
+
+function switchTab(tab){
+  S.tab = tab;
+  $$('.tab').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-tab') === tab); });
+  $('#roulettePane').classList.toggle('hidden', tab !== 'roulette');
+  $('#ladderPane').classList.toggle('hidden', tab !== 'ladder');
+  if (S.game && S.game.type === tab) showGameResult(); else hideGameResult();
+  if (tab === 'roulette') drawRoulette();
+  else { if (!ladder) buildLadder(); else drawLadder(); }
+}
+
+/* ============================ 이벤트 ============================ */
+function bindEvents(){
+  $('#titleInput').addEventListener('input', function(e){
+    S.title = e.target.value;
+    if (S.step === 3) renderShareSummary();
+  });
+
+  $('#addBillBtn').addEventListener('click', addBill);
+  $$('.quick').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var add = Number(btn.getAttribute('data-add')) || 0;
+      if (!S.bills[S.activeBill]) S.activeBill = 0;
+      S.bills[S.activeBill].amount = (S.bills[S.activeBill].amount || 0) + add;
+      renderBills();
+      updateCalc();
+      toast(S.bills[S.activeBill].label + '에 +' + (add / 10000) + '만원');
+    });
+  });
+
+  $('#headMinus').addEventListener('click', function(){
+    if (S.head > 1) { S.head -= 1; if (S.abstain > S.head) S.abstain = S.head; updateCalc(); }
+  });
+  $('#headPlus').addEventListener('click', function(){
+    if (S.head < 30) { S.head += 1; updateCalc(); }
+  });
+
+  $('#splitToggle').addEventListener('click', function(){
+    S.split = !S.split;
+    $('#splitToggle').setAttribute('aria-checked', S.split ? 'true' : 'false');
+    $('#splitPanel').classList.toggle('hidden', !S.split);
+    if (S.split && S.abstain > S.head) S.abstain = S.head;
+    updateCalc();
+  });
+
+  $('#alcoholInput').addEventListener('input', function(e){
+    var raw = digitsOnly(e.target.value);
+    S.alcohol = Number(raw) || 0;
+    updateCalc();
+  });
+  $('#alcoholInput').addEventListener('blur', function(e){
+    e.target.value = S.alcohol ? fmt(S.alcohol) : '';
+  });
+
+  $('#abstMinus').addEventListener('click', function(){
+    if (S.abstain > 0) { S.abstain -= 1; updateCalc(); }
+  });
+  $('#abstPlus').addEventListener('click', function(){
+    if (S.abstain < S.head) { S.abstain += 1; updateCalc(); }
+  });
+
+  $('#bankSelect').addEventListener('change', function(e){
+    S.bank = e.target.value;
+    if (S.step === 3) renderShareSummary();
+  });
+  $('#accountInput').addEventListener('input', function(e){
+    var v = String(e.target.value).replace(/[^0-9\-]/g, '');
+    e.target.value = v;
+    S.account = v;
+    if (S.step === 3) renderShareSummary();
+  });
+  $('#copyAccountBtn').addEventListener('click', function(){
+    if (!S.bank && !S.account) { toast('계좌를 먼저 입력해 주세요'); return; }
+    var text = ((S.bank ? S.bank + ' ' : '') + S.account).trim();
+    copyText(text).then(function(ok){ toast(ok ? '계좌번호를 복사했어요' : '복사가 안 돼요. 길게 눌러 복사해 주세요'); });
+  });
+
+  // ---- 게임
+  $$('#topicChips .chip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      var t = chip.getAttribute('data-topic');
+      $$('#topicChips .chip').forEach(function(c){ c.classList.remove('active'); });
+      chip.classList.add('active');
+      var custom = $('#customTopic');
+      if (t === '__custom') {
+        S.topicMode = 'custom';
+        custom.classList.remove('hidden');
+        custom.focus();
+      } else {
+        S.topicMode = 'preset';
+        S.topic = t;
+        custom.classList.add('hidden');
+      }
+      S.game = null;
+      hideGameResult();
+      if (S.step === 3) renderShareSummary();
+    });
+  });
+  $('#customTopic').addEventListener('input', function(e){
+    S.customTopic = e.target.value;
+    if (S.step === 3) renderShareSummary();
+  });
+
+  $('#addPlayerBtn').addEventListener('click', addPlayer);
+  $('#playerInput').addEventListener('keydown', function(e){
+    if (e.key === 'Enter') { e.preventDefault(); addPlayer(); }
+  });
+
+  $$('.tab').forEach(function(t){
+    t.addEventListener('click', function(){ switchTab(t.getAttribute('data-tab')); });
+  });
+
+  $('#spinBtn').addEventListener('click', spinRoulette);
+  $('#shuffleBtn').addEventListener('click', shuffleLadder);
+  $('#revealBtn').addEventListener('click', revealLadder);
+
+  // ---- 스텝 / 공유
+  $$('.step-pill').forEach(function(pill){
+    pill.addEventListener('click', function(){ goStep(Number(pill.getAttribute('data-step'))); });
+  });
+  $('#prevBtn').addEventListener('click', function(){ goStep(Math.max(1, S.step - 1)); });
+  $('#nextBtn').addEventListener('click', function(){ goStep(Math.min(3, S.step + 1)); });
+  $('#skipGameBtn').addEventListener('click', skipGameAndShare);
+
+  $('#copyKakaoBtn').addEventListener('click', function(){
+    var text = buildKakaoText();
+    copyText(text).then(function(ok){
+      if (ok) { toast('카톡에 붙여넣을 정산 내역을 복사했어요'); return; }
+      showCopySheet(text);
+      toast('복사가 안 돼요. 아래 내역을 길게 눌러 복사해 주세요', 3000);
+    });
+  });
+  $('#copySheetClose').addEventListener('click', hideCopySheet);
+  $('#copySheet').addEventListener('click', function(e){
+    if (e.target && e.target.id === 'copySheet') hideCopySheet();
+  });
+  $('#copyLinkBtn').addEventListener('click', function(){
+    var link = shareLink();
+    copyText(link).then(function(ok){
+      if (!ok) { toast('복사가 안 돼요. 길게 눌러 복사해 주세요'); return; }
+      if (location.protocol === 'file:') {
+        toast('로컬 파일 링크가 복사되었어요 (친구에게 바로 보내려면 카톡용 내역 복사를 쓰거나 웹에 배포해야 해요)', 4200);
+      } else {
+        toast('공유 링크를 복사했어요');
+      }
+    });
+  });
+  $('#previewBtn').addEventListener('click', function(){
+    var payload = buildPayload();
+    location.hash = 'share=' + b64encode(JSON.stringify(payload));
+    showShareView(payload);
+  });
+
+  window.addEventListener('hashchange', handleHash);
+  window.addEventListener('resize', function(){
+    if (S.step !== 2) return;
+    if (S.tab === 'roulette') drawRoulette();
+    else drawLadder();
+  });
+}
+
+/* ============================ 시작 ============================ */
+function init(){
+  bindEvents();
+  renderBills();
+  updateCalc();
+  renderPlayers();
+  updateBottomBar();
+  handleHash();
+  if (S.step === 2) { drawRoulette(); buildLadder(); }
+}
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+}
+
+/* 테스트용 노출 */
+if (typeof window !== 'undefined') {
+  window.__app = {
+    state: S,
+    calcSettlement: calcSettlement,
+    oddPlan: oddPlan,
+    oddPlanFor: oddPlanFor,
+    isOddTopic: isOddTopic,
+    floorUnit: floorUnit,
+    b64encode: b64encode,
+    b64decode: b64decode,
+    pointerIndex: pointerIndex,
+    targetRotation: targetRotation,
+    makeRungs: makeRungs,
+    ladderMap: ladderMap,
+    ladderPath: ladderPath,
+    buildPayload: buildPayload,
+    shareLink: shareLink,
+    buildKakaoText: buildKakaoText,
+    kakaoLines: kakaoLines,
+    showGameResult: showGameResult,
+    hideGameResult: hideGameResult,
+    goStep: goStep,
+    skipGameAndShare: skipGameAndShare,
+    updateBottomBar: updateBottomBar,
+    updateCalc: updateCalc
+  };
+}
+</script>
+</body>
+</html>
